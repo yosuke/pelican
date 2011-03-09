@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import re
+import subprocess
 from codecs import open
 from functools import partial
 import locale
@@ -100,6 +101,12 @@ class Writer(object):
                 f.write(output)
             print u' [ok] writing %s' % filename
 
+        def _tidy_file(output_path, name):
+            """Tidy the file."""
+            filename = os.sep.join((output_path, name))
+            subprocess.call(['tidy', '-m', filename])
+            print u' [ok] tidying %s' % filename
+
         localcontext = context.copy()
         if relative_urls:
             localcontext['SITEURL'] = get_relative_path(name)
@@ -138,9 +145,13 @@ class Writer(object):
 
                 _write_file(template, paginated_localcontext, self.output_path,
                         paginated_name)
+                if self.settings.get('HTML_TIDY'):
+                    _tidy_file(self.output_path, paginated_name)
         else:
             # no pagination
             _write_file(template, localcontext, self.output_path, name)
+            if self.settings.get('HTML_TIDY'):
+                _tidy_file(self.output_path, name)
 
     def update_context_contents(self, name, context):
         """Recursively run the context to find elements (articles, pages, etc) 
